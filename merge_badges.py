@@ -1,3 +1,4 @@
+
 import json
 import requests
 from typing import Dict, Set
@@ -35,14 +36,13 @@ def smart_merge(your_data: Dict, original_data: Dict, protected_ids: Set[str]) -
         if user_id in your_data:
             merged[user_id] = your_data[user_id]
     
-    for user_id, badges in your_data.items():
-        if user_id not in protected_ids and user_id not in merged:
+    for user_id, badges in original_data.items():
+        if user_id not in protected_ids:
             merged[user_id] = badges
     
-    for user_id, badges in original_data.items():
-        if user_id in protected_ids:
-            continue
-        merged[user_id] = badges
+    for user_id, badges in your_data.items():
+        if user_id not in protected_ids and user_id not in original_data:
+            merged[user_id] = badges
     
     return merged
 
