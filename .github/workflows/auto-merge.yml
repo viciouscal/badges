@@ -1,44 +1,42 @@
-name: Auto Merge
+name: Auto Merge Badges
+
 on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'badges.json'
+
 jobs:
-  merge:
+  merge-badges:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.x'
       
-      - run: pip install requests
+      - name: Install dependencies
+        run: pip install requests
       
-      - run: python merge_badges.py
-      
-      - id: check
+      - name: Configure Git
         run: |
-          if git diff --quiet badges.json; then
-            echo "changes=false" >> $GITHUB_OUTPUT
-          else
-            echo "changes=true" >> $GITHUB_OUTPUT
-          fi
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
       
-      - if: steps.check.outputs.changes == 'true'
+      - name: Run merge script
+        run: python merge_badges.py
+      
+      - name: Commit and push if changes
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git stash
-          git pull --rebase
-          git stash pop || true
           git add badges.json
-          git commit -m "Update badges"
-          git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-merge badges from Vencord [skip ci]"
+            git push
+          fi
